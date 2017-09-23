@@ -22,47 +22,48 @@ public class SpikeRecursion extends Application{
 	public static void main(String[] args) {
 		launch(args);
 	}
-	double degreeChange = 50;
+	double degreeChange = 1;
 	double lengthChange = 0.6;
 
 	@Override
 	@FXML
 	public void start(Stage primaryStage) throws Exception {
 		
-		double length = 1200;
-		double x = 40;
-		double y = 400;
+		double length = 300;
+		double x = 100;
+		double y = 200;
 		
-	    /*Parent vbx = FXMLLoader.load(getClass().getResource("Client.fxml"));
+	    Parent vbx = FXMLLoader.load(getClass().getResource("Client.fxml"));
 	    
 	    
 	    iterationsSlider = (Slider) vbx.lookup("#iterationsSlider");
 	    iterationsSlider.setPrefWidth(1300*0.2);
+	    
 	    lengthSlider = (Slider) vbx.lookup("#lengthSlider");
-	    lengthSlider.setPrefWidth(1300*0.2);*/
+	    lengthSlider.setPrefWidth(1300*0.2);
 		
 		Pane root = new Pane();
 		ObservableList list = root.getChildren();
-		list.addAll(spikes(x, y, length, 0, 5));
+		list.addAll(snowflake(x, y, length, 0, 5));
 		
 		BorderPane bp = new BorderPane();
 		bp.setCenter(root);
-		//bp.setLeft(vbx);
+		bp.setLeft(vbx);
 	
 		
-		/*iterationsSlider.valueProperty().addListener(e -> {
-			degreeChange = iterationsSlider.getValue()*3.6;
+		iterationsSlider.valueProperty().addListener(e -> {
+			degreeChange = iterationsSlider.getValue();
 			list.clear();
-			list.addAll(spikes(x, y, length));
+			list.addAll(snowflake(x, y, lengthChange*length, 0, (int) degreeChange));
 			bp.setCenter(root);
 		});
 		
 		lengthSlider.valueProperty().addListener(e -> {
-			lengthChange = lengthSlider.getValue()/150;
+			lengthChange = lengthSlider.getValue()/50;
 			list.clear();
-			list.addAll(spikes(x, y, length));
+			list.addAll(snowflake(x, y, lengthChange*length, 0, (int) degreeChange));
 			bp.setCenter(root);
-		});*/
+		});
 		
 		Scene scene = new Scene(bp, 1280, 800);
 		primaryStage.setTitle("SpikeRecursion");
@@ -76,7 +77,7 @@ public class SpikeRecursion extends Application{
 				rotation(length3, degrees),
 				rotation(length3, degrees-60),
 				rotation(length3, degrees+60),
-				rotation(length3, degrees)
+				rotation(length3, degrees),
 		};
 		Double[] lastXY = {x,y};
 		if(iterations>1){
@@ -97,7 +98,7 @@ public class SpikeRecursion extends Application{
 		else{
 			ArrayList<Line> lines = new ArrayList<Line>();
 			
-			for(int i=0; i<4; i++){
+			for(int i=0; i<doob.length; i++){
 				Line line = new Line();
 				line.setStartX(lastXY[0]);
 				line.setStartY(lastXY[1]);
@@ -109,11 +110,31 @@ public class SpikeRecursion extends Application{
 				line.setFill(Color.BLACK);
 				lines.add(line);
 			}
+			
 			return lines;
 		}
 	}
 	
 	private Double[] rotation(double length, double degrees) {
+		Double[] xy = new Double[2];
+		double radian = Math.toRadians(degrees);
+		xy[0] = length*Math.cos(radian); //x value
+		xy[1] = length*Math.sin(radian); //y value
+		return xy;
+	}
+	
+	private ArrayList<Line> snowflake(double x, double y, double length, double degrees, int iterations){
+		ArrayList<Line> allLines = new ArrayList<Line>();
+		allLines.addAll(spikes(x, y, length, 0, (int) degreeChange*5));
+		for(int i=0; i<5; i++){
+			Double[] xy = snowflakeFlake(x, y, length, 60*i);
+			allLines.addAll(spikes(x+xy[0], y+xy[1], length, 60*(i+1), (int) degreeChange*5));
+			x = x+xy[0];
+			y = y+xy[1];
+		}
+		return allLines;
+	}
+	private Double[] snowflakeFlake(double x, double y, double length, double degrees){
 		Double[] xy = new Double[2];
 		double radian = Math.toRadians(degrees);
 		xy[0] = length*Math.cos(radian); //x value

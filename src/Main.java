@@ -1,8 +1,13 @@
 import java.util.ArrayList;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -13,31 +18,68 @@ import javafx.stage.Stage;
 
 public class Main extends Application{
 
+	@FXML Slider iterationsSlider;
+	@FXML Slider lengthSlider;
+	@FXML ChoiceBox<String> choiceBox;
+	String algo = "recursiveCircles";
+	
+	double degreeChange = 1;
+	double lengthChange = 5*degreeChange;
+	
 	public static void main(String[] args) {
 		launch(args);
 	}
 
+	@FXML
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		
-		Slider sld = new Slider();
+		double length = 200; //Default length
+		double x = 350; //X of recursive function
+		double y = 350; //Y -||-
 		
-		VBox vbx = new VBox();
-		ObservableList vList = vbx.getChildren();
-		vList.add(sld);
+		Parent vbx = FXMLLoader.load(getClass().getResource("Client.fxml"));
+	    
+	    iterationsSlider = (Slider) vbx.lookup("#iterationsSlider");
+	    iterationsSlider.setPrefWidth(1300*0.2);
+	    
+	    lengthSlider = (Slider) vbx.lookup("#lengthSlider");
+	    lengthSlider.setPrefWidth(1300*0.2);
+	    
+	    choiceBox = ((ChoiceBox<String>) vbx.lookup("#choiceBox"));
+	    //Sets the list of algorithms
+	    choiceBox.setItems(FXCollections.observableArrayList("recursiveCircles", "recursiveCirclesAtSides", "recursiveCirclesInTwoDimensions"));
 		
 		Pane fractalPane = new Pane();
 		ObservableList list = fractalPane.getChildren();
-		list.addAll(recursiveCirclesAtSides(400, 650, 350));
-		
-		sld.valueProperty().addListener(e ->{
-			list.clear();
-			list.addAll(recursiveCirclesAtSides((int) (4*sld.getValue()), 650, 350));
-		});
+		list.addAll(recursiveCirclesC.recursiveCircles(x, y, length));
 		
 		BorderPane bp = new BorderPane();
 		bp.setCenter(fractalPane);
 		bp.setLeft(vbx);
+		
+		//Works as a multiplier on the length
+		iterationsSlider.valueProperty().addListener(e -> {
+			degreeChange = iterationsSlider.getValue();
+			lengthChange = 5*degreeChange;
+			list.clear();
+			list.addAll(getFunc(algo, x, y, lengthChange*length));
+			bp.setCenter(fractalPane);
+		});
+		//Changes length of the recursive pattern
+		lengthSlider.valueProperty().addListener(e -> {
+			lengthChange = lengthSlider.getValue()/50;
+			list.clear();
+			list.addAll(getFunc(algo, x, y, lengthChange*length));
+			bp.setCenter(fractalPane);
+		});
+		//Sets the algorithm
+		choiceBox.valueProperty().addListener(e -> {
+			algo = choiceBox.getValue().toString();
+			list.clear();
+			list.addAll(getFunc(algo, x, y, length));
+			bp.setCenter(fractalPane);
+		});
 				
 		Scene scene = new Scene(bp, 1300, 700);
 		primaryStage.setTitle("Circle Recursion");
@@ -45,59 +87,16 @@ public class Main extends Application{
 		primaryStage.show();
 	}
 	
-	public static ArrayList<Circle> recursiveCircles(int radius){ //Crée une liste de cerles différents
-		if(radius<1900){ //Si la variable "radius" est inférieure à 1900
-			Circle circle = new Circle(radius); //Définit l'object cercle
-			circle.setCenterX(650); //La x position du cercle
-			circle.setCenterY(350);  //La y position du cercle
-			circle.setFill(null); //Définit la couleur du cercle. Le cercle est transparant, donc l'écran ne soit pas noir et on puisse voir les différents cercles.
-			circle.setStroke(Color.BLACK); //Définit le contour du cercle 
-			ArrayList<Circle> list = recursiveCircles(radius*2);  //Appelle la liste avec les autres cercles. 
-			list.add(circle); //Ajoute le cerle à la liste de autres cercles
-			return list; //Revoie la liste au cerle suivant
+	//Checks which algorithm is set ands calls that specific algorithm
+	private static ArrayList<Circle> getFunc(String id, double x, double y, double length){
+		switch(id){
+			case "recursiveCircles":
+				return recursiveCirclesC.recursiveCircles(x, y, length);
+			case "recursiveCirclesAtSides":
+				return recursiveCirclesAtSidesC.recursiveCirclesAtSides(x, y, length);
+			case "recursiveCirclesInTwoDimensions":
+				return recursiveCirclesInTwoDimensions.recursiveCirclesInTwoDimensions(x, y, length);
 		}
-		else{ //Si la variable "radius" est supérieure à 1900, retourne une liste.
-			return new ArrayList<Circle>();
-		}
-	}
-	
-	public static ArrayList<Circle> recursiveCirclesAtSides(int radius, int x, int y){ //Crée une liste de cerles différents sur une ligne
-		if(radius>1){ //Si la variable "radius" est inférieure à 1900
-			Circle circle = new Circle(radius); //Définit l'object cercle
-			circle.setCenterX(x); //La x position du cercle
-			circle.setCenterY(y);  //La y position du cercle
-			circle.setFill(null); //Définit la couleur du cercle. Le cercle est transparant, donc l'écran ne soit pas noir et on puisse voir les différents cercles.
-			circle.setStroke(Color.BLACK); //Définit le contour du cercle 
-			ArrayList<Circle> list = recursiveCirclesAtSides(radius/2, x+radius, y);  //Appelle la liste avec les autres cercles. Le cercle sur le côté droit
-			ArrayList<Circle> list2 = recursiveCirclesAtSides(radius/2, x-radius, y);  //Appelle la liste avec les autres cercles. Le cercle sur le côté gauche
-			list.add(circle); //Ajoute le cerle à la liste de autres cercles
-			list.addAll(list2); //Ajoute les cerles de gauche à la liste de autres cercles.
-			return list; //Revoie la liste au cerle suivant
-		}
-		else{ //Si la variable "radius" est supérieure à 1900, retourne une liste.
-			return new ArrayList<Circle>();
-		}
-	}
-	
-	public static ArrayList<Circle> recursiveCirclesInTwoDimensions(int radius, int x, int y){ //Crée une liste de cerles différents
-		if(radius>1){ //Si la variable "radius" est inférieure à 1900, elle termine
-			Circle circle = new Circle(radius); //Définit l'object cercle
-			circle.setCenterX(x); //La x position du cercle
-			circle.setCenterY(y);  //La y position du cercle
-			circle.setFill(null); //Définit la couleur du cercle. Le cercle est transparant, donc l'écran ne soit pas noir et on puisse voir les différents cercles.
-			circle.setStroke(Color.BLACK); //Définit le contour du cercle 
-			ArrayList<Circle> list = recursiveCirclesInTwoDimensions(radius/2, x+radius, y);  //Appelle la liste avec les autres cercles. Le cercle sur le côté droit
-			ArrayList<Circle> list2 = recursiveCirclesInTwoDimensions(radius/2, x-radius, y);  //Appelle la liste avec les autres cercles. Le cercle sur le côté gauche
-			ArrayList<Circle> list3 = recursiveCirclesInTwoDimensions(radius/2, x, y+radius);  //Appelle la liste avec les autres cercles. le cercle sur le dessus
-			ArrayList<Circle> list4 = recursiveCirclesInTwoDimensions(radius/2, x, y-radius);  //Appelle la liste avec les autres cercles. le cercle en bas
-			list.add(circle); //Ajoute le cercle à la liste de autres cercles
-			list.addAll(list2); //Ajoute les cercles de gauche à la liste de autres cercles.
-			list.addAll(list3); //Ajoute les cerles du haut à la liste de autres cercles.
-			list.addAll(list4); //Ajoute les cercles en bas à la liste de autres cercles.
-			return list; //Revoie la liste au cerle suivant
-		}
-		else{ //Si la variable "radius" est supérieure à 1900, retourne une liste.
-			return new ArrayList<Circle>();
-		}
+		return null;
 	}
 }
